@@ -1,0 +1,7 @@
+# Secrets
+.env
+.htpasswd
+
+# Config
+.openclaw/*
+!.openclaw/openclaw.json.template
