@@ -1,1 +1,12 @@
-{}
+{
+  "gateway": {
+    "mode": "local",
+    "controlUi": {
+      "allowedOrigins": ["https://your-domain.com"]
+    },
+    "auth": {
+      "mode": "token"
+    },
+    "trustedProxies": ["172.19.0.0/16"]
+  }
+}
