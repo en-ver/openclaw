@@ -16,6 +16,11 @@ The gateway integrates with messengers, workstations, and other node types.
 - [Nodes](https://docs.openclaw.ai/nodes)
 - [macOS App](https://docs.openclaw.ai/start/onboarding) - connect your Mac to the gateway
 
+## Authentication
+
+- **Dashboard (`/dashboard`)**: Protected by Google OAuth (see [OAUTH2_PROXY.md](OAUTH2_PROXY.md))
+- **Gateway endpoint (`/`)**: No authentication (for node WebSocket connections)
+
 ## Prerequisites
 
 - Docker and Docker Compose installed
@@ -53,11 +58,12 @@ Edit `.env`:
 - Set `OPENCLAW_GATEWAY_TOKEN`, `CLAUDE_WEB_COOKIE`, `CLAUDE_AI_SESSION_KEY`, `CLAUDE_WEB_SESSION_KEY`
 - Set `GOG_KEYRING_PASSWORD`
 
-### 4. Generate HTTP Basic Auth password
+### 4. Configure OAuth2 Proxy
 
-```bash
-docker run --rm httpd:alpine htpasswd -nbB admin "your-password" > nginx/.htpasswd
-```
+Follow the instructions in [OAUTH2_PROXY.md](OAUTH2_PROXY.md) to:
+1. Create Google OAuth credentials
+2. Generate cookie secret
+3. Add allowed email addresses
 
 ### 5. Update OpenClaw configuration
 
@@ -152,17 +158,17 @@ Refresh the browser page. The Control UI should now show **Connected** status.
 
 ### 11. Configure Control UI Base Path
 
-To protect the Control UI dashboard with HTTP Basic Auth, configure the base path:
+Configure the base path to route the dashboard through OAuth protection:
 
 1. Open `https://your-domain.com/config` in your browser
 2. Find **Gateway** → **Control UI** → **Control UI Base Path**
 3. Set it to `/dashboard`
 4. Click **Save**
 
-This routes the dashboard through the `/dashboard` location in nginx, which is protected by Basic Auth. The root location (`/`) remains unprotected for WebSocket connections from nodes.
+This routes the dashboard through the `/dashboard` location in nginx, which is protected by Google OAuth. The root location (`/`) remains unprotected for WebSocket connections from nodes.
 
 **Access URLs after this change:**
-- Dashboard (Basic Auth protected): `https://your-domain.com/dashboard`
+- Dashboard (Google OAuth protected): `https://your-domain.com/dashboard`
 - WebSocket endpoint (for nodes): `wss://your-domain.com/`
 
 ### 12. Node Configuration

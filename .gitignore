@@ -1,7 +1,9 @@
 # Secrets
 .env
-.htpasswd
 
 # Config
 .openclaw/*
 !.openclaw/openclaw.json.template
+
+# OAuth2 Proxy
+oauth2-proxy/authenticated-emails.txt
