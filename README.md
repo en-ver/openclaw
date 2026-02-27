@@ -36,60 +36,70 @@ git clone git@github.com:en-ver/openclaw.git
 cd openclaw
 ```
 
-### 2. Copy template files
+### 2. Initialize submodule
 
 ```bash
-cp .env.template .env
-cp .openclaw/openclaw.json.template .openclaw/openclaw.json
+make init
 ```
 
-### 3. Configure secrets
+### 3. Run setup
+
+Create directories, copy template files, and fix permissions:
+
+```bash
+make setup
+```
+
+**Note:** `make setup` requires `sudo` to set directory ownership to UID 1000 (the container's `node` user). This ensures the OpenClaw container can write to `.openclaw/` and `oauth2-proxy/` directories.
+
+### 4. Configure secrets
 
 Edit `.env`:
 - Set `DOMAIN` to your domain (e.g., `openclaw.example.com`)
-- Generate secrets:
-  ```bash
-  # Gateway token
-  openssl rand -hex 24
-  
-  # Session keys (run 3 times)
-  openssl rand -hex 32
-  ```
-- Set `OPENCLAW_GATEWAY_TOKEN`, `CLAUDE_WEB_COOKIE`, `CLAUDE_AI_SESSION_KEY`, `CLAUDE_WEB_SESSION_KEY`
-- Set `GOG_KEYRING_PASSWORD`
+- Set `GOG_KEYRING_PASSWORD` — generate with: `openssl rand -hex 32`
 
-### 4. Configure OAuth2 Proxy
+### 5. Configure OAuth2 Proxy
 
 Follow the instructions in [OAUTH2_PROXY.md](OAUTH2_PROXY.md) to:
 1. Create Google OAuth credentials
 2. Generate cookie secret
 3. Add allowed email addresses
 
-### 5. Update OpenClaw configuration
+### 6. Build images
 
-Edit `.openclaw/openclaw.json`:
-- Set `gateway.controlUi.allowedOrigins` to `["https://your-domain.com"]`
+```bash
+make build
+```
 
-### 6. Prepare nginx for initial certificate generation
+### 7. Run onboarding
+
+Run the first-time onboarding wizard to configure LLM providers, gateway settings, and workspace:
+
+```bash
+make onboard
+```
+
+See [Configuration Wizard docs](https://docs.openclaw.ai/start/wizard) for details.
+
+### 8. Prepare nginx for initial certificate generation (temporary)
 
 Edit `nginx/templates/default.conf.template`:
 - Comment out the entire HTTPS server block
 - Comment out the HTTP-to-HTTPS redirect in the HTTP server block
 
-### 7. Initialize and start containers
+### 9. Start containers
 
 ```bash
-make init
-make build up
+make up
 ```
 
-### 8. Generate SSL certificate
+### 10. Generate SSL certificate
 
 ```bash
 make cert DOMAIN=your-domain.com
 ```
 
-### 9. Enable HTTPS in nginx
+### 11. Enable HTTPS in nginx
 
 Edit `nginx/templates/default.conf.template`:
 - Uncomment the HTTPS server block
@@ -101,26 +111,28 @@ Restart nginx:
 docker compose restart nginx
 ```
 
-### 10. First-time Control UI Setup
+### 12. First-time Control UI Setup
 
 After deployment, you must authorize your browser to access the Control UI.
 
 **Step 1: Connect from browser**
 
-1. Open `https://your-domain.com/overview` in a browser
-2. In the **Gateway Access** section, find the token input field
-3. Enter your gateway token (the value of `OPENCLAW_GATEWAY_TOKEN` from `.env`)
-4. Click **Connect**
+1. Get your gateway token:
+   ```bash
+   make token
+   ```
+2. Open `https://your-domain.com/dashboard` in a browser
+3. In the **Gateway Access** section, find the token input field
+4. Enter the token from step 1
+5. Click **Connect**
 
 **Step 2: Approve the pairing request**
 
 You'll see "pairing required" - this is expected for security. Remote connections require explicit approval.
 
-Run these commands on the server:
-
 ```bash
 # List pending pairing requests
-docker compose exec openclaw-gateway node dist/index.js devices list
+make devices-list
 ```
 
 You'll see output like:
@@ -137,13 +149,6 @@ Pending (1)
 Copy the **Request** ID and approve it:
 
 ```bash
-# Approve by request ID
-docker compose exec openclaw-gateway node dist/index.js devices approve <requestId>
-```
-
-Or use the Makefile shortcut:
-
-```bash
 make devices-approve ID=<requestId>
 ```
 
@@ -156,22 +161,24 @@ Refresh the browser page. The Control UI should now show **Connected** status.
 - Local connections (`127.0.0.1`) are auto-approved
 - You can use `make devices-list` to check pending requests
 
-### 11. Configure Control UI Base Path
+### 13. Reconfigure (optional)
 
-Configure the base path to route the dashboard through OAuth protection:
+To add more LLM providers, configure channels, or change other settings after initial setup:
 
-1. Open `https://your-domain.com/config` in your browser
-2. Find **Gateway** → **Control UI** → **Control UI Base Path**
-3. Set it to `/dashboard`
-4. Click **Save**
+```bash
+make configure
+```
 
-This routes the dashboard through the `/dashboard` location in nginx, which is protected by Google OAuth. The root location (`/`) remains unprotected for WebSocket connections from nodes.
+This runs the interactive configuration wizard. To configure only a specific section:
 
-**Access URLs after this change:**
-- Dashboard (Google OAuth protected): `https://your-domain.com/dashboard`
-- WebSocket endpoint (for nodes): `wss://your-domain.com/`
+```bash
+# Model providers only
+make configure --section model
 
-### 12. Node Configuration
+# Available sections: workspace, model, web, gateway, daemon, channels, skills, health
+```
+
+### 14. Node Configuration
 
 When connecting nodes to this gateway, use port 443 (HTTPS) instead of the default gateway port (18789):
 
@@ -191,11 +198,15 @@ Run `make` to see available commands:
 |---------|-------------|
 | `make init` | Initialize git submodule |
 | `make update` | Update OpenClaw to latest |
+| `make setup` | Create directories, copy templates, fix permissions |
 | `make build` | Build Docker images |
+| `make onboard` | Run first-time onboarding wizard |
+| `make configure` | Reconfigure settings (providers, channels, etc.) |
 | `make up` | Start containers |
 | `make down` | Stop containers |
 | `make restart` | Restart containers |
 | `make logs` | Follow container logs |
+| `make token` | Show the gateway token |
 | `make cert DOMAIN=x` | Generate SSL certificate |
 | `make cert-renew` | Renew SSL certificates |
 | `make devices-list` | List pending device pairing requests |
@@ -211,5 +222,6 @@ Run `make` to see available commands:
 
 ```bash
 make update
-make build up
+make build
+make up
 ```

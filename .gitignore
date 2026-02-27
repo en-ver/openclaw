@@ -7,3 +7,6 @@
 
 # OAuth2 Proxy
 oauth2-proxy/authenticated-emails.txt
+
+# Agents
+.claude

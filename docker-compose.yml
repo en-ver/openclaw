@@ -1,45 +1,52 @@
 services:
   openclaw-gateway:
     container_name: openclaw-gateway
-    image: ${OPENCLAW_IMAGE:-openclaw/openclaw:local}
+    image: ${OPENCLAW_IMAGE:-openclaw:latest}
     build:
       context: openclaw/
-    env_file:
-      - .env
+    restart: unless-stopped
     environment:
-      HOME: /home/node
-      TERM: xterm-256color
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
-      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
-      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
-      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+      - HOME=/home/node
+      - NODE_ENV=production
+      - TERM=xterm-256color
+      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME}
+      - PATH=/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
-    ports:
-      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
-      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
-    init: true
-    restart: unless-stopped
-    networks:
-      - opennet
     command:
       [
         "node",
         "dist/index.js",
         "gateway",
         "--bind",
-        "${OPENCLAW_GATEWAY_BIND:-lan}",
+        "${OPENCLAW_GATEWAY_BIND}",
         "--port",
-        "18789",
-        "--allow-unconfigured",
+        "${OPENCLAW_GATEWAY_PORT}",
+        # "--allow-unconfigured",
       ]
+    networks:
+      - opennet
+
+  openclaw-cli:
+    image: ${OPENCLAW_IMAGE:-openclaw:latest}
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+      - BROWSER=echo
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+    networks:
+      - opennet
 
   oauth2-proxy:
     container_name: openclaw-oauth2-proxy
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.14.0
-    env_file:
-      - .env
     environment:
       OAUTH2_PROXY_PROVIDER: google
       OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_PROXY_CLIENT_ID}
