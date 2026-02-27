@@ -169,14 +169,23 @@ To add more LLM providers, configure channels, or change other settings after in
 make configure
 ```
 
-This runs the interactive configuration wizard. To configure only a specific section:
+You can also run any openclaw CLI command using the generic pass-through:
 
 ```bash
-# Model providers only
-make configure --section model
+# Configure only model providers
+make openclaw ARGS='configure --section model'
 
-# Available sections: workspace, model, web, gateway, daemon, channels, skills, health
+# Approve a Telegram pairing request
+make openclaw ARGS='pairing approve telegram <CODE>'
+
+# List channels and their status
+make openclaw ARGS='channels status'
+
+# List all available models
+make openclaw ARGS='models list --all'
 ```
+
+See [CLI Reference](https://docs.openclaw.ai/cli) for the full list of available commands.
 
 ### 14. Node Configuration
 
@@ -209,6 +218,7 @@ Run `make` to see available commands:
 | `make token` | Show the gateway token |
 | `make cert DOMAIN=x` | Generate SSL certificate |
 | `make cert-renew` | Renew SSL certificates |
+| `make openclaw ARGS='...'` | Run any openclaw CLI command |
 | `make devices-list` | List pending device pairing requests |
 | `make devices-approve ID=x` | Approve device pairing request |
 

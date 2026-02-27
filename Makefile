@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: help init update setup build onboard configure up down restart logs cert cert-renew devices-list devices-approve token
+.PHONY: help init update setup build onboard configure up down restart logs cert cert-renew devices-list devices-approve token openclaw
 
 help:
 	@echo "OpenClaw Deployment Commands:"
@@ -29,6 +29,14 @@ help:
 	@echo "  SSL:"
 	@echo "    make cert           Generate SSL cert (DOMAIN=your-domain.com)"
 	@echo "    make cert-renew     Renew SSL certificates"
+	@echo ""
+	@echo "  CLI (pass-through to openclaw CLI):"
+	@echo "    make openclaw ARGS='<command>'   Run any openclaw CLI command"
+	@echo "    Examples:"
+	@echo "      make openclaw ARGS='pairing approve telegram <CODE>'"
+	@echo "      make openclaw ARGS='models list --all'"
+	@echo "      make openclaw ARGS='channels status'"
+	@echo "      make openclaw ARGS='config get gateway.auth.mode'"
 	@echo ""
 	@echo "  Maintenance:"
 	@echo "    make update         Update OpenClaw to latest"
@@ -89,6 +97,9 @@ cert-renew:
 
 token:
 	@docker compose exec openclaw-gateway node -e "const cfg=JSON.parse(require('fs').readFileSync('/home/node/.openclaw/openclaw.json','utf8'));console.log(cfg.gateway?.auth?.token||'not set')"
+
+openclaw:
+	docker compose run --rm openclaw-cli $(ARGS)
 
 devices-list:
 	docker compose exec openclaw-gateway node dist/index.js devices list
