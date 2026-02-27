@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: help init update setup build onboard configure up down restart logs cert cert-renew devices-list devices-approve token openclaw
+.PHONY: help init update setup build onboard configure up down restart logs cert cert-renew devices-list devices-approve devices-remove token openclaw
 
 help:
 	@echo "OpenClaw Deployment Commands:"
@@ -25,6 +25,7 @@ help:
 	@echo "  Devices:"
 	@echo "    make devices-list   List pending device pairing requests"
 	@echo "    make devices-approve ID=<requestId>"
+	@echo "    make devices-remove ID=<deviceId>"
 	@echo ""
 	@echo "  SSL:"
 	@echo "    make cert           Generate SSL cert (DOMAIN=your-domain.com)"
@@ -106,5 +107,8 @@ devices-list:
 
 devices-approve:
 	docker compose exec openclaw-gateway node dist/index.js devices approve $(ID)
+
+devices-remove:
+	docker compose exec openclaw-gateway node dist/index.js devices remove $(ID)
 
 .DEFAULT_GOAL := help
