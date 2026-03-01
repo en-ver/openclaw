@@ -2,7 +2,14 @@
   "gateway": {
     "controlUi": {
       "basePath": "/dashboard",
-      "dangerouslyAllowHostHeaderOriginFallback": true
+      "allowedOrigins": ["https://${DOMAIN}"]
+    },
+    "auth": {
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000
+      }
     },
     "trustedProxies": ["172.19.0.0/16"]
   }

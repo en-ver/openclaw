@@ -19,7 +19,7 @@ The gateway integrates with messengers, workstations, and other node types.
 ## Authentication
 
 - **Dashboard (`/dashboard`)**: Protected by Google OAuth (see [OAUTH2_PROXY.md](OAUTH2_PROXY.md))
-- **Gateway endpoint (`/`)**: No authentication (for node WebSocket connections)
+- **Gateway endpoint (`/`)**: WebSocket-only, authenticated by the gateway's token auth (not OAuth)
 
 ## Prerequisites
 
@@ -52,11 +52,13 @@ make setup
 
 **Note:** `make setup` requires `sudo` to set directory ownership to UID 1000 (the container's `node` user). This ensures the OpenClaw container can write to `.openclaw/` and `oauth2-proxy/` directories.
 
-### 4. Configure secrets
+### 4. Configure environment
 
 Edit `.env`:
 - Set `DOMAIN` to your domain (e.g., `openclaw.example.com`)
 - Set `GOG_KEYRING_PASSWORD` — generate with: `openssl rand -hex 32`
+
+Edit `.env.providers` with your LLM provider API keys (e.g., `OPENAI_API_KEY`). These are passed to the gateway container.
 
 ### 5. Configure OAuth2 Proxy
 
@@ -96,7 +98,7 @@ make up
 ### 10. Generate SSL certificate
 
 ```bash
-make cert DOMAIN=your-domain.com
+make cert
 ```
 
 ### 11. Enable HTTPS in nginx
@@ -216,11 +218,12 @@ Run `make` to see available commands:
 | `make restart` | Restart containers |
 | `make logs` | Follow container logs |
 | `make token` | Show the gateway token |
-| `make cert DOMAIN=x` | Generate SSL certificate |
+| `make cert` | Generate SSL certificate |
 | `make cert-renew` | Renew SSL certificates |
 | `make openclaw ARGS='...'` | Run any openclaw CLI command |
 | `make devices-list` | List pending device pairing requests |
 | `make devices-approve ID=x` | Approve device pairing request |
+| `make devices-remove ID=x` | Remove a paired device |
 
 ## SSL Certificate Renewal
 

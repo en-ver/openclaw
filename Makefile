@@ -53,10 +53,12 @@ setup:
 	mkdir -p .openclaw/workspace .openclaw/identity oauth2-proxy
 	@echo "Copying template files (skipping if exists)..."
 	@if [ ! -f .env ]; then cp .env.template .env && echo "  Created .env"; fi
+	@if [ ! -f .env.providers ]; then cp .env.providers.template .env.providers && echo "  Created .env.providers"; fi
 	@if [ ! -f .openclaw/openclaw.json ]; then cp .openclaw/openclaw.json.template .openclaw/openclaw.json && echo "  Created .openclaw/openclaw.json"; fi
 	@if [ ! -f oauth2-proxy/authenticated-emails.txt ]; then cp oauth2-proxy/authenticated-emails.txt.template oauth2-proxy/authenticated-emails.txt && echo "  Created oauth2-proxy/authenticated-emails.txt"; fi
 	@echo "Setting permissions for container user (UID 1000)..."
 	@sudo chown -R 1000:1000 .openclaw oauth2-proxy
+	@chmod 700 .openclaw
 	@echo ""
 	@echo "Setup complete."
 	@echo ""

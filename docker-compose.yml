@@ -5,26 +5,30 @@ services:
     build:
       context: openclaw/
     restart: unless-stopped
+    env_file:
+      - .env.providers
     environment:
       - HOME=/home/node
       - NODE_ENV=production
+      - TZ=${TZ:-UTC}
       - TERM=xterm-256color
-      - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND}
-      - OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT}
-      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME}
+      - DOMAIN=${DOMAIN}
+      - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND:-lan}
+      - OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT:-18789}
+      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-/home/node/.openclaw}
       - PATH=/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     volumes:
-      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
-      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+      - ${OPENCLAW_CONFIG_DIR:-./.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-./.openclaw/workspace}:/home/node/.openclaw/workspace
     command:
       [
         "node",
         "dist/index.js",
         "gateway",
         "--bind",
-        "${OPENCLAW_GATEWAY_BIND}",
+        "${OPENCLAW_GATEWAY_BIND:-lan}",
         "--port",
-        "${OPENCLAW_GATEWAY_PORT}",
+        "${OPENCLAW_GATEWAY_PORT:-18789}",
         # "--allow-unconfigured",
       ]
     networks:
@@ -33,13 +37,17 @@ services:
   openclaw-cli:
     container_name: openclaw-cli
     image: ${OPENCLAW_IMAGE:-openclaw:latest}
+    env_file:
+      - .env.providers
     environment:
       - HOME=/home/node
+      - TZ=${TZ:-UTC}
       - TERM=xterm-256color
+      - DOMAIN=${DOMAIN}
       - BROWSER=echo
     volumes:
-      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
-      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+      - ${OPENCLAW_CONFIG_DIR:-./.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-./.openclaw/workspace}:/home/node/.openclaw/workspace
     stdin_open: true
     tty: true
     init: true
@@ -82,6 +90,7 @@ services:
       - letsencrypt:/etc/letsencrypt:ro
       - ./nginx/templates:/etc/nginx/templates:ro
       - html:/usr/share/nginx/html:ro
+      - /var/log/nginx:/var/log/nginx
     depends_on:
       - openclaw-gateway
       - oauth2-proxy
